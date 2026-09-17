@@ -1,5 +1,7 @@
 ﻿'use strict';
 
+const XGD_API_KEY = ''; // x.gd/en/developer でAPIキーを取得して入力
+
 // ── Department data (Kanagawa Univ. Minato Mirai, 2025 entrants) ──
 const DEPTS = [
 
@@ -666,31 +668,34 @@ function refreshDetail(deptId) {
 
 
 // ── Share ──
-function buildShareData(deptId) {
+async function copyShareLink(deptId) {
   const dept = DEPTS.find(d => d.id === deptId);
-  if (!dept) return null;
-  const credits = {};
-  ['kyoyo', 'senkou'].forEach(sec => {
+  if (!dept) return;
+  const SECS = ['kyoyo', 'senkou'];
+  const dIdx = DEPTS.indexOf(dept);
+  const course = getSelectedCourse(deptId) || '';
+  const parts = [];
+  SECS.forEach((sec, sIdx) => {
     const section = dept[sec];
     if (!section) return;
-    section.items.forEach(item => {
+    section.items.forEach((item, iIdx) => {
       const v = getCredit(deptId, sec, item.id);
-      if (v > 0) credits[sec + '__' + item.id] = v;
+      if (v > 0) parts.push(sIdx + '-' + iIdx + '=' + v);
     });
   });
-  const course = getSelectedCourse(deptId);
-  return { d: deptId, c: course || '', cr: credits };
-}
-
-function copyShareLink(deptId) {
-  const data = buildShareData(deptId);
-  if (!data) return;
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  const url = location.origin + location.pathname + '#share=' + encoded;
-  navigator.clipboard.writeText(url).then(() => {
+  const fullUrl = location.origin + location.pathname + '#share=v2:' + dIdx + '~' + course + '~' + parts.join(',');
+  let urlToCopy = fullUrl;
+  if (XGD_API_KEY) {
+    try {
+      const res = await fetch('https://xgd.io/V1/shorten?url=' + encodeURIComponent(fullUrl) + '&key=' + XGD_API_KEY);
+      const json = await res.json();
+      if (json.status === 200 && json.shorturl) urlToCopy = json.shorturl;
+    } catch (e) {}
+  }
+  navigator.clipboard.writeText(urlToCopy).then(() => {
     showToast('リンクをコピーしました！');
   }).catch(() => {
-    prompt('このURLをコピーしてください:', url);
+    prompt('このURLをコピーしてください:', urlToCopy);
   });
 }
 
@@ -710,8 +715,32 @@ function loadShareFromHash() {
   const hash = location.hash;
   if (!hash.startsWith('#share=')) return false;
   try {
-    const encoded = hash.slice(7);
-    const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    const payload = hash.slice(7);
+    let data;
+    if (payload.startsWith('v2:')) {
+      const SECS = ['kyoyo', 'senkou'];
+      const body = payload.slice(3);
+      const t1 = body.indexOf('~'), t2 = body.indexOf('~', t1 + 1);
+      const dept = DEPTS[parseInt(body.slice(0, t1))];
+      if (!dept) return false;
+      const courseVal = body.slice(t1 + 1, t2);
+      const credits = {};
+      const creditStr = body.slice(t2 + 1);
+      if (creditStr) {
+        creditStr.split(',').forEach(e => {
+          const dash = e.indexOf('-'), eq = e.indexOf('=');
+          const sec = SECS[parseInt(e.slice(0, dash))];
+          const section = dept[sec];
+          if (!section) return;
+          const item = section.items[parseInt(e.slice(dash + 1, eq))];
+          if (!item) return;
+          credits[sec + '__' + item.id] = parseInt(e.slice(eq + 1));
+        });
+      }
+      data = { d: dept.id, c: courseVal, cr: credits };
+    } else {
+      data = JSON.parse(decodeURIComponent(escape(atob(payload))));
+    }
     const dept = DEPTS.find(d => d.id === data.d);
     if (!dept) return false;
     Object.entries(data.cr || {}).forEach(([key, val]) => {
