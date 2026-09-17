@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>神奈川大学 横浜キャンパス 単位計算アプリ 2025</title>
+<style>
+:root {
+  --primary: #003087;
+  --accent: #E8B000;
+  --bg: #f0f4f8;
+  --card: #ffffff;
+  --text: #1a1a2e;
+  --muted: #666;
+  --border: #dde3ee;
+  --success: #27ae60;
+  --warn: #f39c12;
+  --danger: #e74c3c;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+header{background:var(--primary);color:#fff;padding:14px 16px;text-align:center;}
+header h1{font-size:1.05rem;font-weight:bold;}
+header p{font-size:0.75rem;opacity:.8;margin-top:3px;}
+.container{max-width:620px;margin:0 auto;padding:14px 12px;}
+.card{background:var(--card);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.card-title{font-size:.95rem;font-weight:bold;color:var(--primary);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--accent);}
+.sel-group{margin-bottom:10px;}
+.sel-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:3px;}
+select{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:#fff;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23666' d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.tabs{display:flex;gap:4px;margin-bottom:12px;}
+.tab-btn{flex:1;padding:8px;border:none;border-radius:8px;font-size:.85rem;cursor:pointer;background:var(--border);color:var(--text);font-weight:bold;transition:background .2s;}
+.tab-btn.active{background:var(--primary);color:#fff;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.grp{margin-bottom:14px;}
+.grp-header{display:flex;justify-content:space-between;align-items:center;background:#eef2ff;padding:9px 12px;border-radius:8px 8px 0 0;border-left:4px solid var(--primary);}
+.grp-name{font-weight:bold;font-size:.88rem;}
+.grp-meta{font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.73rem;font-weight:bold;}
+.badge.ok{background:#d4edda;color:#155724;}
+.badge.ng{background:#f8d7da;color:#721c24;}
+.items{border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;}
+.item{display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid var(--border);gap:8px;}
+.item:last-child{border-bottom:none;}
+.item.sub{background:#fafafa;padding-left:22px;}
+.item-name{flex:1;font-size:.83rem;}
+.item-name small{display:block;color:var(--muted);font-size:.72rem;margin-top:2px;line-height:1.3;}
+.item-req{font-size:.73rem;color:var(--muted);white-space:nowrap;}
+.item-input{width:58px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;text-align:center;font-size:.88rem;}
+.item-icon{font-size:.95rem;width:20px;text-align:center;}
+.grad-status{border-radius:12px;padding:18px;text-align:center;margin-bottom:14px;color:#fff;}
+.grad-status.ok{background:var(--success);}
+.grad-status.ng{background:var(--danger);}
+.grad-status h2{font-size:1.05rem;margin-bottom:6px;}
+.grad-status .big{font-size:2.8rem;font-weight:bold;line-height:1;}
+.grad-status .sub{font-size:.85rem;opacity:.9;margin-top:4px;}
+.prog-item{margin-bottom:10px;}
+.prog-label{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:3px;}
+.prog-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;transition:width .3s;}
+.check-list{}
+.check-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.83rem;}
+.check-item:last-child{border-bottom:none;}
+.check-item.sub{padding-left:18px;color:var(--muted);}
+.check-vals{font-size:.78rem;white-space:nowrap;}
+.note{font-size:.75rem;color:var(--muted);background:#f7f7f7;padding:9px 12px;border-radius:8px;margin-top:6px;line-height:1.5;}
+.reset-btn{background:none;border:1px solid var(--danger);color:var(--danger);padding:5px 12px;border-radius:6px;font-size:.78rem;cursor:pointer;float:right;margin-top:-2px;}
+.reset-btn:hover{background:var(--danger);color:#fff;}
+#content{display:none;}
+.total-sep{margin-top:12px;padding-top:10px;border-top:2px solid var(--border);}
+</style>
+</head>
+<body>
+<header>
+  <h1>神奈川大学 横浜キャンパス</h1>
+  <p>卒業単位計算アプリ（2025年度入学者対応）</p>
+</header>
+<div class="container">
+
+<div class="card">
+  <div class="card-title">学部・学科を選択</div>
+  <div class="sel-group">
+    <label>学部</label>
+    <select id="faculty-sel" onchange="onFacultyChange()">
+      <option value="">-- 学部を選択 --</option>
+      <option value="理学部">理学部</option>
+      <option value="工学部">工学部</option>
+      <option value="化学生命学部">化学生命学部</option>
+      <option value="情報学部">情報学部</option>
+    </select>
+  </div>
+  <div class="sel-group">
+    <label>学科・コース</label>
+    <select id="dept-sel" onchange="onDeptChange()">
+      <option value="">-- 先に学部を選択してください --</option>
+    </select>
+  </div>
+</div>
+
+<div id="content">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('input')">📝 単位入力</button>
+    <button class="tab-btn" onclick="showTab('summary')">📊 進捗確認</button>
+  </div>
+  <div class="tab-content active" id="tab-input">
+    <div id="credit-form"></div>
+  </div>
+  <div class="tab-content" id="tab-summary">
+    <div id="summary-content"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const DEPTS = {
+  '理学部': ['理学科 数学コース','理学科 物理コース','理学科 化学コース','理学科 生物コース','理学科 地球環境科学コース','理学科 総合理学コース'],
+  '工学部': ['機械工学科','電気電子情報工学科','経営工学科','応用物理学科'],
+  '化学生命学部': ['応用化学科','生命機能学科'],
+  '情報学部': ['計算機科学科','システム数理学科','先端情報領域プログラム'],
+};
+
+const KYOTSU_RIKA = [
+  {id:'fys',name:'初年次ゼミナール（FYS）',min:2},
+  {id:'eigo',name:'外国語科目',min:8,note:'英語8単位（必修）'},
+  {id:'jinbun',name:'人文の分野',min:4},
+  {id:'shakai',name:'社会の分野',min:4},
+  {id:'shizen',name:'自然の分野',min:4},
+  {id:'ningen',name:'人間形成の分野',min:2},
+  {id:'bunya',name:'分野横断テーマ科目',min:2},
+  {id:'kyoyo_etc',name:'教養基礎演習・その他',min:0,note:'合計32単位になるよう選択'},
+];
+const KYOTSU_KO = [
+  {id:'fys',name:'初年次ゼミナール（FYS）',min:2},
+  {id:'eigo',name:'外国語科目',min:8,note:'英語8単位（必修）'},
+  {id:'jinbun',name:'人文の分野',min:4},
+  {id:'shakai',name:'社会の分野',min:4},
+  {id:'shizen',name:'自然の分野',min:4},
+  {id:'ningen',name:'人間形成の分野',min:2},
+  {id:'bunya',name:'分野横断テーマ科目',min:2},
+  {id:'kyoyo_etc',name:'教養基礎演習・その他',min:0,note:'合計32単位になるよう選択'},
+];
+const KYOTSU_CHEM = [
+  {id:'fys',name:'初年次ゼミナール（FYS）',min:2},
+  {id:'eigo',name:'外国語科目（英語）',min:8,note:'英語（Listening/Speaking）I・IIを必修として修得'},
+  {id:'jinbun',name:'人文の分野',min:4},
+  {id:'shakai',name:'社会の分野',min:4},
+  {id:'shizen',name:'自然の分野',min:4},
+  {id:'gendai',name:'現代社会と市民',min:2},
+  {id:'kyoyo_etc',name:'教養系科目（その他）',min:0,note:'合計32単位になるよう選択'},
+];
+const KYOTSU_INFO = [
+  {id:'fys',name:'初年次ゼミナール（FYS）',min:2},
+  {id:'eigo',name:'外国語科目（英語）',min:8,note:'英語（Listening/Speaking/Reading/Writing）を修得'},
+  {id:'jinbun',name:'人文の分野',min:4},
+  {id:'shakai',name:'社会の分野',min:4},
+  {id:'shizen',name:'自然の分野',min:4},
+  {id:'ningen',name:'人間形成の分野',min:2},
+  {id:'bunya',name:'分野横断テーマ科目',min:2},
+  {id:'kyoyo_etc',name:'教養基礎演習・その他',min:0,note:'合計32単位になるよう選択'},
+];
+
+const REQ = {
+  '理学科 数学コース': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_RIKA},
+    {name:'専攻科目 A群（必修）',min:12,color:'#8e44ad',items:[
+      {id:'zemi',name:'理学ゼミナール',min:2},
+      {id:'sotsu1',name:'卒業研究Ⅰ',min:4},
+      {id:'sotsu2',name:'卒業研究Ⅱ',min:4},
+      {id:'rinko1',name:'輪講Ⅰ',min:1},
+      {id:'rinko2',name:'輪講Ⅱ',min:1},
+    ]},
+    {name:'専攻科目 B群（必修）',min:6,color:'#27ae60',items:[
+      {id:'b_hissu',name:'B群必修科目',min:6,note:'担当教員の指示に従い履修'},
+    ]},
+    {name:'専攻科目 B群（選択必修）',min:24,color:'#e67e22',items:[
+      {id:'b_sel',name:'B群選択必修科目',min:24},
+    ]},
+    {name:'専攻科目 B群・C群（その他）',min:0,color:'#95a5a6',items:[
+      {id:'bc_etc',name:'B群・C群その他選択科目',min:0,note:'専攻合計96単位以上になるよう選択'},
+    ]},
+  ]},
+
+  '理学科 物理コース': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_RIKA},
+    {name:'専攻科目 A群（必修）',min:12,color:'#8e44ad',items:[
+      {id:'zemi',name:'理学ゼミナール',min:2},
+      {id:'sotsu1',name:'卒業研究Ⅰ',min:4},
+      {id:'sotsu2',name:'卒業研究Ⅱ',min:4},
+      {id:'rinko1',name:'輪講Ⅰ',min:1},
+      {id:'rinko2',name:'輪講Ⅱ',min:1},
+    ]},
+    {name:'専攻科目 B群（物理系必修）',min:18,color:'#27ae60',items:[
+      {id:'b_phys',name:'物理系必修科目',min:18,note:'電磁気学I・II、量子力学I・II、統計力学、熱力学、力学I・II、解析力学など'},
+    ]},
+    {name:'専攻科目 B群（選択必修）',min:22,color:'#e67e22',items:[
+      {id:'b_sel',name:'B群選択必修科目',min:22},
+    ]},
+    {name:'専攻科目 B群・C群（その他）',min:0,color:'#95a5a6',items:[
+      {id:'bc_etc',name:'B群その他・C群関連科目',min:0,note:'専攻合計96単位以上になるよう選択'},
+    ]},
+  ]},
+
+  '理学科 化学コース': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_RIKA},
+    {name:'専攻科目 A群（必修）',min:12,color:'#8e44ad',items:[
+      {id:'zemi',name:'理学ゼミナール',min:2},
+      {id:'sotsu1',name:'卒業研究Ⅰ',min:4},
+      {id:'sotsu2',name:'卒業研究Ⅱ',min:4},
+      {id:'rinko1',name:'輪講Ⅰ',min:1},
+      {id:'rinko2',name:'輪講Ⅱ',min:1},
+    ]},
+    {name:'専攻科目 B群（化学系必修）',min:21,color:'#27ae60',items:[
+      {id:'b_chem',name:'化学系必修科目',min:21,note:'物理化学I・II・基礎化学実験・有機化学I・II・無機化学I・II・分析化学・応用化学実験など'},
+    ]},
+    {name:'専攻科目 B群（選択）',min:30,color:'#e67e22',items:[
+      {id:'b_sel',name:'B群選択科目',min:30,note:'B群から30単位以上'},
+    ]},
+    {name:'専攻科目 C群（関連）',min:0,color:'#95a5a6',items:[
+      {id:'c_kanren',name:'C群関連科目',min:0,note:'専攻合計96単位以上になるよう選択'},
+    ]},
+  ]},
+
+  '理学科 生物コース': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_RIKA},
+    {name:'専攻科目 A群（必修）',min:12,color:'#8e44ad',items:[
+      {id:'zemi',name:'理学ゼミナール',min:2},
+      {id:'sotsu1',name:'卒業研究Ⅰ',min:4},
+      {id:'sotsu2',name:'卒業研究Ⅱ',min:4},
+      {id:'rinko1',name:'輪講Ⅰ',min:1},
+      {id:'rinko2',name:'輪講Ⅱ',min:1},
+    ]},
+    {name:'専攻科目 B群（生物コース必修）',min:14,color:'#27ae60',items:[
+      {id:'b_bio',name:'生物コース必修科目',min:14,note:'生物学概論・細胞生物学・分子生物学・生化学・遺伝学・生物学実験など'},
+    ]},
+    {name:'専攻科目 B群・C群（選択）',min:48,color:'#e67e22',items:[
+      {id:'bc_sel',name:'B群・C群選択科目',min:48,note:'B群とC群合わせて84単位以上（A12+84=96）'},
+    ]},
+  ]},
+
+  '理学科 地球環境科学コース': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_RIKA},
+    {name:'専攻科目 A群（必修）',min:12,color:'#8e44ad',items:[
+      {id:'zemi',name:'理学ゼミナール',min:2},
+      {id:'sotsu1',name:'卒業研究Ⅰ',min:4},
+      {id:'sotsu2',name:'卒業研究Ⅱ',min:4},
+      {id:'rinko1',name:'輪講Ⅰ',min:1},
+      {id:'rinko2',name:'輪講Ⅱ',min:1},
+    ]},
+    {name:'専攻科目 B群（地球環境科学系必修）',min:20,color:'#27ae60',items:[
+      {id:'b_earth',name:'地球環境科学系必修科目',min:20,note:'地球環境科学概論・地質学・気象学・海洋学・地球環境実験・地学野外実習など'},
+    ]},
+    {name:'専攻科目 B群・C群（選択）',min:0,color:'#95a5a6',items:[
+      {id:'bc_sel',name:'B群・C群選択科目',min:0,note:'専攻合計96単位以上になるよう選択'},
+    ]},
+  ]},
+
+  '理学科 総合理学コース': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_RIKA},
+    {name:'専攻科目 A群（必修）',min:12,color:'#8e44ad',items:[
+      {id:'zemi',name:'理学ゼミナール',min:2},
+      {id:'sotsu1',name:'卒業研究Ⅰ',min:4},
+      {id:'sotsu2',name:'卒業研究Ⅱ',min:4},
+      {id:'rinko1',name:'輪講Ⅰ',min:1},
+      {id:'rinko2',name:'輪講Ⅱ',min:1},
+    ]},
+    {name:'専攻科目 B群（総合理学系必修）',min:16,color:'#27ae60',items:[
+      {id:'b_sogo',name:'総合理学系必修科目',min:16,note:'数学・物理学・化学・生物学・地球科学の各分野から横断的に履修'},
+    ]},
+    {name:'専攻科目 B群・C群（選択）',min:0,color:'#95a5a6',items:[
+      {id:'bc_sel',name:'B群・C群選択科目',min:0,note:'専攻合計96単位以上になるよう選択'},
+    ]},
+  ]},
+
+  '機械工学科': {total:125,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_KO},
+    {name:'専門基礎必修科目',min:13,color:'#c0392b',items:[
+      {id:'kiso_hissu',name:'専門基礎必修科目',min:13,note:'解析I・II・微分方程式・代数学・物理学実験A・コンピュータ解析など'},
+    ]},
+    {name:'専門必修科目',min:8,color:'#8e44ad',items:[
+      {id:'senko_hissu',name:'専門必修科目',min:8,note:'機械工学実習I・II・機械解剖など'},
+    ]},
+    {name:'専門選択必修科目',min:38,color:'#27ae60',items:[
+      {id:'senko_sel_hissu',name:'専門選択必修科目',min:38,note:'メカトロデザイン・材料力学I・II・機械力学・流体力学I・工業熱力学I・自動制御・機械工学輪講・卒業研究など'},
+    ]},
+    {name:'選択科目・関連科目（残り）',min:0,color:'#95a5a6',items:[
+      {id:'sel_kanren',name:'選択科目・関連科目',min:0,note:'専攻合計93単位以上になるよう選択（合計125単位）'},
+    ]},
+  ]},
+
+  '電気電子情報工学科': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_KO},
+    {name:'専攻科目 基礎科目',min:17,color:'#c0392b',items:[
+      {id:'kiso',name:'基礎科目（17単位）',min:17,note:'力学I・物理学実験A・電気電子情報入門・情報数学・情報処理演習Iなど'},
+    ]},
+    {name:'専攻科目 必修科目',min:42,color:'#8e44ad',items:[
+      {id:'hissu',name:'必修科目（42単位）',min:42,note:'電気回路・電磁気学・プログラミング言語・電気電子情報実験I〜V・輪講I・II・卒業研究I・IIなど'},
+    ]},
+    {name:'専攻科目 倫理科目',min:2,color:'#16a085',items:[
+      {id:'rinri',name:'技術者倫理または情報と倫理',min:2},
+    ]},
+    {name:'専攻科目 専門基礎・選択',min:35,color:'#e67e22',items:[
+      {id:'senmon_kiso',name:'専門基礎選択科目',min:11},
+      {id:'sentaku',name:'選択科目',min:24,note:'電気・電子・情報・通信の各分野から選択'},
+    ]},
+  ]},
+
+  '経営工学科': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:[
+      {id:'fys',name:'初年次ゼミナール（FYS）',min:2},
+      {id:'eigo',name:'実用英語I〜IV（必修）',min:8,note:'実用英語I〜IVを必修として修得（各2単位）'},
+      {id:'jinbun',name:'人文の分野',min:4},
+      {id:'shakai',name:'社会の分野',min:4},
+      {id:'shizen',name:'自然の分野',min:4},
+      {id:'ningen',name:'人間形成の分野',min:2},
+      {id:'bunya',name:'分野横断テーマ科目',min:2},
+      {id:'kyoyo_etc',name:'教養基礎演習・その他',min:0},
+    ]},
+    {name:'専攻科目 基礎科目',min:8,color:'#c0392b',items:[
+      {id:'kiso',name:'基礎科目（8単位）',min:8,note:'数学・物理学・化学系基礎（解析I、物理学、化学基礎Aなど）'},
+    ]},
+    {name:'専攻科目 必修科目',min:2,color:'#8e44ad',items:[
+      {id:'hissu',name:'必修科目（2単位）',min:2,note:'経営工学総論など'},
+    ]},
+    {name:'専攻科目 選択必修科目',min:38,color:'#27ae60',items:[
+      {id:'sel_hissu',name:'選択必修科目（38単位）',min:38,note:'アカウンティング・生産管理・OR・システム工学・輪講A・B・卒業研究I・IIなど'},
+    ]},
+    {name:'選択科目 A〜D群（計42単位以上）',min:42,color:'#e67e22',items:[
+      {id:'a_global',name:'A群（グローバルエンジニア系）',min:8,note:'国際コミュニケーションI・II・英語ディスカッション・工業中国語初級など'},
+      {id:'b_keiei',name:'B群（経営デザイン系）',min:8,note:'マーケティング・財務会計・コストマネジメントなど'},
+      {id:'c_shakai',name:'C群（社会デザイン系）',min:8,note:'ものづくり・社会システム工学・多文化共生など'},
+      {id:'d_etc',name:'D群・その他選択科目',min:0,note:'合計42単位以上になるよう選択'},
+    ]},
+    {name:'関連科目',min:0,color:'#95a5a6',items:[
+      {id:'kanren',name:'関連科目',min:0,note:'専攻合計96単位以上になるよう選択'},
+    ]},
+  ]},
+
+  '応用物理学科': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:[
+      {id:'fys',name:'初年次ゼミナール（FYS）',min:2},
+      {id:'eigo',name:'外国語科目（英語I〜IV）',min:8,note:'英語（総合）I〜IVを必修として修得'},
+      {id:'jinbun',name:'人文の分野',min:4},
+      {id:'shakai',name:'社会の分野',min:4},
+      {id:'shizen',name:'自然の分野',min:4},
+      {id:'ningen',name:'人間形成の分野',min:2},
+      {id:'bunya',name:'分野横断テーマ科目',min:2},
+      {id:'kyoyo_etc',name:'教養基礎演習・その他',min:0},
+    ]},
+    {name:'専門基礎必修科目',min:20,color:'#c0392b',items:[
+      {id:'kiso_hissu',name:'専門基礎必修科目',min:20,note:'解析I・II・線形代数I・II・力学I・II・電磁気学I・物理学実験A・B・プログラミングI・IIなど'},
+    ]},
+    {name:'専門基礎選択科目',min:10,color:'#8e44ad',items:[
+      {id:'kiso_sel',name:'専門基礎選択科目',min:10,note:'化学基礎A・生物学概論・地学など'},
+    ]},
+    {name:'専門必修科目',min:20,color:'#27ae60',items:[
+      {id:'senmon_hissu',name:'専門必修科目',min:20,note:'応用物理学実験A・B・C・データサイエンスラボラトリー・輪講I・II・卒業研究I・IIなど'},
+    ]},
+    {name:'専門選択科目（プログラム）',min:8,color:'#e67e22',items:[
+      {id:'program',name:'専門プログラム科目',min:8,note:'宇宙観測プログラムまたはナノサイエンスプログラムから8単位以上'},
+    ]},
+    {name:'関連科目',min:0,color:'#95a5a6',items:[
+      {id:'kanren',name:'関連科目',min:0,note:'専攻合計96単位以上になるよう選択'},
+    ]},
+  ]},
+
+  '応用化学科': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_CHEM},
+    {name:'学科必修科目',min:44,color:'#c0392b',items:[
+      {id:'gakka_hissu',name:'学科必修科目（44単位）',min:44,note:'化学概論・基礎化学実験・物理化学I・II・有機化学I・II・無機化学I・II・分析化学・科学技術英語I・II・応用化学輪講I〜III・応用化学研究I・II（卒業研究）など'},
+    ]},
+    {name:'学部共通科目（必修）',min:6,color:'#8e44ad',items:[
+      {id:'gakubu_hissu',name:'学部共通必修科目（6単位）',min:6,note:'化学生命学概論I・II・化学生命SDGs論など'},
+    ]},
+    {name:'学部共通科目（選択必修）',min:4,color:'#16a085',items:[
+      {id:'gakubu_sel',name:'学部共通選択必修（4単位）',min:4,note:'化学生命キャリアデザイン・科学と産業・知的財産権など'},
+    ]},
+    {name:'学科選択科目',min:22,color:'#27ae60',items:[
+      {id:'gakka_sel',name:'学科選択科目（22単位）',min:22,note:'応用化学系・生命機能系・環境生活科学系の専門科目から選択'},
+    ]},
+    {name:'関連科目',min:0,color:'#e67e22',items:[
+      {id:'kanren',name:'関連科目',min:0,note:'専攻合計96単位以上になるよう選択（関連科目20単位まで換算可）'},
+    ]},
+  ]},
+
+  '生命機能学科': {total:128,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_CHEM},
+    {name:'学科必修科目',min:44,color:'#c0392b',items:[
+      {id:'gakka_hissu',name:'学科必修科目（44単位）',min:44,note:'生物学概論・基礎生物学実験・生命機能学実験・分子生物学・細胞生物学・生化学・遺伝学・科学技術英語I・II・生命機能学輪講I〜III・生命機能学研究I・II（卒業研究）など'},
+    ]},
+    {name:'学部共通科目（必修）',min:6,color:'#8e44ad',items:[
+      {id:'gakubu_hissu',name:'学部共通必修科目（6単位）',min:6,note:'化学生命学概論I・II・化学生命SDGs論など'},
+    ]},
+    {name:'学部共通科目（選択必修）',min:4,color:'#16a085',items:[
+      {id:'gakubu_sel',name:'学部共通選択必修（4単位）',min:4,note:'化学生命キャリアデザイン・科学と産業・知的財産権など'},
+    ]},
+    {name:'学科選択科目',min:22,color:'#27ae60',items:[
+      {id:'gakka_sel',name:'学科選択科目（22単位）',min:22,note:'生命機能学系・応用化学系・環境生活科学系の専門科目から選択'},
+    ]},
+    {name:'関連科目',min:0,color:'#e67e22',items:[
+      {id:'kanren',name:'関連科目',min:0,note:'専攻合計96単位以上になるよう選択（関連科目20単位まで換算可）'},
+    ]},
+  ]},
+
+  '計算機科学科': {total:124,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_INFO},
+    {name:'専攻科目 必修科目',min:46,color:'#c0392b',items:[
+      {id:'hissu',name:'必修科目（46単位）',min:46,note:'計算機科学概論・計算機システム基礎・情報基盤と情報倫理・情報科学リテラシー・プログラミングA・B・演習・離散数学I・II・演習・確率統計学・アルゴリズム論・情報ゼミナール・卒業研究I・II・輪講I・IIなど'},
+    ]},
+    {name:'専攻科目 選択必修科目',min:14,color:'#8e44ad',items:[
+      {id:'sel_hissu',name:'選択必修科目（14単位以上）',min:14,note:'概論・基礎・プログラミング・応用の各カテゴリから選択'},
+    ]},
+    {name:'専攻科目 選択科目',min:32,color:'#27ae60',items:[
+      {id:'sentaku',name:'選択科目（32単位以上）',min:32,note:'AI・グラフィクス・情報セキュリティ・データベース・OS・ソフトウェア工学など'},
+    ]},
+  ]},
+
+  'システム数理学科': {total:124,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_INFO},
+    {name:'専攻科目 必修科目',min:42,color:'#c0392b',items:[
+      {id:'hissu',name:'必修科目（42単位）',min:42,note:'システム数理概論・解析I・II・III・線形代数I（行列）・II（線形空間）・確率統計学I・II・グラフ理論・離散数学・演習・情報処理演習I・卒業研究I・II・輪講I・IIなど'},
+    ]},
+    {name:'専攻科目 高信頼システム科目群（B群）',min:10,color:'#8e44ad',items:[
+      {id:'b_grp',name:'高信頼システム科目群（B群）',min:10,note:'情報論理学・情報代数数学・計算と論理・位相幾何学・位相と論理・システム検証など'},
+    ]},
+    {name:'専攻科目 セキュアシステム科目群（C群）',min:10,color:'#16a085',items:[
+      {id:'c_grp',name:'セキュアシステム科目群（C群）',min:10,note:'オートマトンとコンパイラ・情報セキュリティ・計算可能性・暗号理論・計算の複雑さなど'},
+    ]},
+    {name:'専攻科目 データ分析システム科目群（D群）',min:10,color:'#e67e22',items:[
+      {id:'d_grp',name:'データ分析システム科目群（D群）',min:10,note:'確率過程論・最適化システム・機械学習・データマイニング・統計解析など'},
+    ]},
+    {name:'専攻科目 選択科目（その他）',min:0,color:'#95a5a6',items:[
+      {id:'sel_etc',name:'選択科目（その他）',min:0,note:'専攻合計92単位以上になるよう選択（合計124単位）'},
+    ]},
+  ]},
+
+  '先端情報領域プログラム': {total:124,groups:[
+    {name:'共通教養科目',min:32,color:'#2980b9',items:KYOTSU_INFO},
+    {name:'専攻科目 情報数学系必修',min:30,color:'#c0392b',items:[
+      {id:'math_hissu',name:'情報数学系必修科目（30単位）',min:30,note:'離散数学I・II・演習・確率統計学・線形代数I・II・解析I・II・グラフ理論・情報処理演習Iなど'},
+    ]},
+    {name:'専攻科目 プログラミング系必修',min:16,color:'#8e44ad',items:[
+      {id:'prog_hissu',name:'プログラミング系必修科目（16単位）',min:16,note:'計算機科学概論・情報科学リテラシー・プログラミングA・B・演習・計算機システム基礎など'},
+    ]},
+    {name:'専攻科目 選択必修科目',min:10,color:'#27ae60',items:[
+      {id:'sel_hissu',name:'選択必修科目（10単位）',min:10,note:'AI・データ分析・セキュリティ・数理システム分野から選択'},
+    ]},
+    {name:'専攻科目 卒業研究・ゼミナール',min:16,color:'#e67e22',items:[
+      {id:'sotsu',name:'卒業研究I・II・輪講I・II・情報ゼミナール',min:16},
+    ]},
+    {name:'専攻科目 選択科目',min:0,color:'#95a5a6',items:[
+      {id:'sentaku',name:'選択科目',min:0,note:'専攻合計92単位以上になるよう選択（合計124単位）'},
+    ]},
+  ]},
+};
+
+// ===== STATE =====
+let currentDept = null;
+let credits = {};
+
+function onFacultyChange() {
+  const f = document.getElementById('faculty-sel').value;
+  const dSel = document.getElementById('dept-sel');
+  dSel.innerHTML = '<option value="">-- 学科・コースを選択 --</option>';
+  document.getElementById('content').style.display = 'none';
+  if (!f) return;
+  (DEPTS[f]||[]).forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d;
+    dSel.appendChild(o);
+  });
+}
+
+function onDeptChange() {
+  const d = document.getElementById('dept-sel').value;
+  if (!d || !REQ[d]) { document.getElementById('content').style.display = 'none'; return; }
+  currentDept = d;
+  credits = {};
+  try { Object.assign(credits, JSON.parse(localStorage.getItem('ku_credits_'+d)||'{}')); } catch(e){}
+  document.getElementById('content').style.display = 'block';
+  renderForm();
+  showTab('input');
+}
+
+function showTab(t) {
+  const btns = document.querySelectorAll('.tab-btn');
+  btns[0].classList.toggle('active', t==='input');
+  btns[1].classList.toggle('active', t==='summary');
+  document.getElementById('tab-input').classList.toggle('active', t==='input');
+  document.getElementById('tab-summary').classList.toggle('active', t==='summary');
+  if (t==='summary') renderSummary();
+}
+
+function getC(id) { return parseInt(credits[id]||0)||0; }
+
+function saveCredits() {
+  try { localStorage.setItem('ku_credits_'+currentDept, JSON.stringify(credits)); } catch(e){}
+}
+
+function renderForm() {
+  const req = REQ[currentDept];
+  let html = `<div class="card" style="padding-bottom:10px;">
+    <div class="card-title">${currentDept} — 単位入力
+      <button class="reset-btn" onclick="resetCredits()">リセット</button>
+    </div>`;
+  req.groups.forEach(g => {
+    const gt = g.items.reduce((s,i)=>s+getC(i.id),0);
+    const gok = g.min===0 || gt>=g.min;
+    html += `<div class="grp">
+      <div class="grp-header" style="border-left-color:${g.color}">
+        <span class="grp-name">${g.name}</span>
+        <div class="grp-meta">
+          ${g.min>0?g.min+'単位以上':''}
+          <span class="badge ${gok?'ok':'ng'}">${gt}単位${gok?' ✓':''}</span>
+        </div>
+      </div>
+      <div class="items">`;
+    const multi = g.items.length > 1;
+    g.items.forEach(item => {
+      const v = getC(item.id);
+      const iok = item.min===0 || v>=item.min;
+      html += `<div class="item${multi?' sub':''}">
+        <div class="item-name">${item.name}${item.note?`<small>${item.note}</small>`:''}
+        </div>
+        ${item.min>0?`<span class="item-req">${item.min}以上</span>`:''}
+        <input class="item-input" type="number" min="0" max="80" value="${v}"
+          oninput="onInput('${item.id}',this.value)">
+        <span class="item-icon">${item.min>0?(iok?'✅':'❌'):''}</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  html += `<div class="note">数値を入力すると自動で保存されます。「進捗確認」タブで卒業判定を確認してください。</div></div>`;
+  document.getElementById('credit-form').innerHTML = html;
+}
+
+function onInput(id, val) {
+  credits[id] = Math.max(0, parseInt(val)||0);
+  saveCredits();
+  // update group header badges
+  const req = REQ[currentDept];
+  req.groups.forEach(g => {
+    const gt = g.items.reduce((s,i)=>s+getC(i.id),0);
+    const gok = g.min===0 || gt>=g.min;
+    // Update item icons
+    g.items.forEach(item => {
+      const v = getC(item.id);
+      const iok = item.min===0 || v>=item.min;
+    });
+  });
+  // Simple re-render of form
+  renderForm();
+}
+
+function resetCredits() {
+  if (!confirm('入力データをリセットしますか？')) return;
+  credits = {};
+  try { localStorage.removeItem('ku_credits_'+currentDept); } catch(e){}
+  renderForm();
+}
+
+function calcTotal() {
+  if (!currentDept) return 0;
+  return REQ[currentDept].groups.reduce((s,g)=>s+g.items.reduce((ss,i)=>ss+getC(i.id),0),0);
+}
+
+function renderSummary() {
+  const req = REQ[currentDept];
+  const total = calcTotal();
+  const needed = req.total;
+
+  // Collect checks
+  const checks = [];
+  req.groups.forEach(g => {
+    const gt = g.items.reduce((s,i)=>s+getC(i.id),0);
+    if (g.min>0) checks.push({name:g.name,req:g.min,earned:gt,ok:gt>=g.min,color:g.color,top:true});
+    if (g.items.length>1) g.items.filter(i=>i.min>0).forEach(i=>{
+      checks.push({name:i.name,req:i.min,earned:getC(i.id),ok:getC(i.id)>=i.min,color:g.color,top:false});
+    });
+  });
+  const allOk = checks.every(c=>c.ok) && total>=needed;
+
+  let html = `<div class="grad-status ${allOk?'ok':'ng'}">
+    <h2>${allOk?'🎓 卒業要件を満たしています！':'📚 卒業要件を確認しましょう'}</h2>
+    <div class="big">${total}</div>
+    <div class="sub">/ ${needed} 単位（卒業要件） — ${total<needed?`あと${needed-total}単位`:'達成！'}</div>
+  </div>`;
+
+  // Progress by group
+  html += `<div class="card"><div class="card-title">カテゴリ別進捗</div>`;
+  req.groups.forEach(g => {
+    const gt = g.items.reduce((s,i)=>s+getC(i.id),0);
+    const pct = g.min>0 ? Math.min(100,Math.round(gt/g.min*100)) : 100;
+    const ok = g.min===0 || gt>=g.min;
+    html += `<div class="prog-item">
+      <div class="prog-label">
+        <span>${g.name}</span>
+        <span style="color:${g.color}">${gt}${g.min>0?'/'+g.min:''} 単位</span>
+      </div>
+      <div class="prog-bar">
+        <div class="prog-fill" style="width:${pct}%;background:${ok?g.color:'#f39c12'}"></div>
+      </div>
+    </div>`;
+  });
+  const tpct = Math.min(100, Math.round(total/needed*100));
+  html += `<div class="prog-item total-sep">
+    <div class="prog-label"><strong>合計単位数</strong><strong>${total} / ${needed} 単位</strong></div>
+    <div class="prog-bar" style="height:12px">
+      <div class="prog-fill" style="width:${tpct}%;background:${total>=needed?'var(--success)':'var(--warn)'}"></div>
+    </div>
+  </div></div>`;
+
+  // Check list
+  html += `<div class="card"><div class="card-title">要件チェックリスト</div><div class="check-list">`;
+  checks.forEach(c=>{
+    html += `<div class="check-item${c.top?'':' sub'}">
+      <span>${c.ok?'✅':'❌'}</span>
+      <span style="flex:1;${c.top?'font-weight:bold;':''}">${c.name}</span>
+      <span class="check-vals" style="color:${c.ok?'var(--success)':'var(--danger)'}">${c.earned}/${c.req}単位</span>
+    </div>`;
+  });
+  html += `<div class="check-item">
+    <span>${total>=needed?'✅':'❌'}</span>
+    <span style="flex:1;font-weight:bold;">総単位数（卒業要件）</span>
+    <span class="check-vals" style="color:${total>=needed?'var(--success)':'var(--danger)'}">${total}/${needed}単位</span>
+  </div></div></div>`;
+
+  html += `<div class="note">
+  ※ このアプリは2025年度入学者に適用される卒業要件に基づいています。<br>
+  ※ 理学部 地球環境科学コース・総合理学コース、応用物理学科の一部要件は公式シラバスも必ず確認してください。<br>
+  ※ 最終的な判定は履修要覧・指導教員の確認を必ず行ってください。<br>
+  ※ 入力データはこのブラウザに自動保存されます。</div>`;
+
+  document.getElementById('summary-content').innerHTML = html;
+}
+</script>
+</body>
+</html>
