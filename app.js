@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const XGD_API_KEY = ''; // x.gd/en/developer でAPIキーを取得して入力
+// is.gd を利用してURLを短縮（APIキー不要）
 
 // ── Department data (Kanagawa Univ. Minato Mirai, 2025 entrants) ──
 const DEPTS = [
@@ -685,13 +685,11 @@ async function copyShareLink(deptId) {
   });
   const fullUrl = location.origin + location.pathname + '#share=v2:' + dIdx + '~' + course + '~' + parts.join(',');
   let urlToCopy = fullUrl;
-  if (XGD_API_KEY) {
-    try {
-      const res = await fetch('https://xgd.io/V1/shorten?url=' + encodeURIComponent(fullUrl) + '&key=' + XGD_API_KEY);
-      const json = await res.json();
-      if (json.status === 200 && json.shorturl) urlToCopy = json.shorturl;
-    } catch (e) {}
-  }
+  try {
+    const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(fullUrl));
+    const short = await res.text();
+    if (short.startsWith('https://tinyurl.com/')) urlToCopy = short.trim();
+  } catch (e) {}
   navigator.clipboard.writeText(urlToCopy).then(() => {
     showToast('リンクをコピーしました！');
   }).catch(() => {
