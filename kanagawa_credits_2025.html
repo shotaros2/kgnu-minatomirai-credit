@@ -489,7 +489,10 @@ function renderDetail(deptId, isShared) {
     ${sharedBanner}
     <div class="detail-top-bar">
       <button class="back-btn" onclick="renderSelect()">← 学科を変更</button>
-      <button class="share-btn" onclick="copyShareLink('${dept.id}')">リンクを共有</button>
+      <div class="detail-top-actions">
+        ${!isShared ? '<button class="ws-import-btn-sm" onclick="showWsGuide()">📥 自動取込</button>' : ''}
+        <button class="share-btn" onclick="copyShareLink('${dept.id}')">リンクを共有</button>
+      </div>
     </div>
     <div class="dept-header" style="--fcolor:${dept.fcolor}">
       <div class="dept-header-faculty">${dept.faculty}</div>
@@ -767,7 +770,7 @@ function parseWebStationText(text) {
   const courses = [];
   let nameCol = 1, passCol = 4, creditsCol = 9, catCol = 6, bigCatCol = 5;
   let headerFound = false;
-  for (const line of text.split('\n')) {
+  for (const line of text.split(/\r?\n|\r/)) {
     const cells = line.split('\t').map(c => c.trim());
     if (!headerFound) {
       const pi = cells.indexOf('合否');
@@ -805,9 +808,15 @@ function importFromPaste() {
     alert('修得済み科目が見つかりませんでした。\n「成績・修得単位照会」のページをそのままコピーしてください。');
     return;
   }
-  window._wsImport = courses;
   closeWsGuide();
-  renderSelect();
+  if (currentDeptId) {
+    const matched = applyWebStationImport(currentDeptId, courses);
+    renderDetail(currentDeptId);
+    setTimeout(() => showToast(matched > 0 ? matched + '科目の単位を取り込みました' : '一致する科目が見つかりませんでした'), 600);
+  } else {
+    window._wsImport = courses;
+    renderSelect();
+  }
 }
 
 function showWsGuide() {
