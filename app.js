@@ -491,7 +491,8 @@ function renderDetail(deptId, isShared) {
     const matched = applyWebStationImport(deptId, _c);
     window._wsImport = null;
     history.replaceState(null, '', location.pathname);
-    const _dbg = matched === 0 ? '（' + _c.length + '件検出, 先頭bigCat=' + (_c[0] ? _c[0][3] : '?') + '）' : '';
+    if (matched === 0) { console.log('[WS DEBUG] courses:', _c); console.log('[WS DEBUG] cats:', [...new Set(_c.map(r => r[2]))]); }
+    const _dbg = matched === 0 ? '（' + _c.length + '件）' : '';
     setTimeout(() => showToast(matched > 0 ? matched + '科目の単位を取り込みました' : '一致する科目が見つかりませんでした' + _dbg), 600);
   }
 
@@ -895,7 +896,8 @@ function importFromPaste() {
   if (currentDeptId) {
     const matched = applyWebStationImport(currentDeptId, courses);
     renderDetail(currentDeptId);
-    const _dbg2 = matched === 0 ? '（' + courses.length + '件検出, 先頭bigCat=' + (courses[0] ? courses[0][3] : '?') + '）' : '';
+    if (matched === 0) { console.log('[WS DEBUG] courses:', courses); console.log('[WS DEBUG] cats:', [...new Set(courses.map(r => r[2]))]); }
+    const _dbg2 = matched === 0 ? '（' + courses.length + '件）' : '';
     setTimeout(() => showToast(matched > 0 ? matched + '科目の単位を取り込みました' : '一致する科目が見つかりませんでした' + _dbg2), 600);
   } else {
     window._wsImport = courses;
