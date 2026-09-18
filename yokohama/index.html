@@ -805,7 +805,7 @@ function importFromPaste() {
   }
   const courses = parseWebStationText(text);
   if (courses.length === 0) {
-    alert('修得済み科目が見つかりませんでした。\n「成績・修得単位照会」のページをそのままコピーしてください。');
+    alert('修得済み科目が見つかりませんでした。\nWebStationの「単位修得状況照会」ページで、表の見出し行（「科目大区分」「合否」などの行）から最後の行末まで選択してコピーしてください。');
     return;
   }
   closeWsGuide();
@@ -834,15 +834,28 @@ function showWsGuide() {
       <div class="ws-step">
         <div class="ws-step-num">1</div>
         <div class="ws-step-body">
-          <div class="ws-step-title">WebStationで「成績・修得単位照会」を開く</div>
-          <div class="ws-step-desc">WebStationにログインして「成績・修得単位照会」のページを開く</div>
+          <div class="ws-step-title">WebStationで「単位修得状況照会」を開く</div>
+          <div class="ws-step-desc">WebStationにログインして「教務/授業関連 → 成績 → 単位修得状況照会」のページを開く</div>
         </div>
       </div>
       <div class="ws-step">
         <div class="ws-step-num">2</div>
         <div class="ws-step-body">
-          <div class="ws-step-title">成績表の「1」から最後の番号の行までを選択してコピー</div>
-          <div class="ws-step-desc">表の先頭行「1　ＦＹＳ…」から最後の番号の行末までをドラッグして選択 → <b>Ctrl+C</b>（Mac: <b>Cmd+C</b>）<br>スマホ: 「1」の行を長押し →「すべて選択」→「コピー」<br><span class="ws-hint-ok">✅ 見出し行やナビが混ざっても自動でフィルタリングします</span></div>
+          <div class="ws-step-title">表の<b>見出し行</b>から最後の行末までを選択してコピー</div>
+          <div class="ws-step-desc">下の赤い範囲をドラッグで選択 → <b>Ctrl+C</b>（Mac: <b>Cmd+C</b>）<br>スマホ: 見出し行を長押し →「すべて選択」→「コピー」</div>
+          <div class="ws-copy-example">
+            <div class="ws-copy-example-label">▼ コピー開始（見出し行の先頭）</div>
+            <div class="ws-copy-table-wrap">
+              <table class="ws-copy-table">
+                <tr><th>No.</th><th>科目大区分</th><th>科目中区分</th><th>開講科目</th><th>単位数</th><th>…</th><th>合否</th></tr>
+                <tr><td>1</td><td>共通教養科目…</td><td>初年次ゼミ…</td><td>ＦＹＳ</td><td>2.0</td><td>…</td><td>合</td></tr>
+                <tr><td>2</td><td>共通教養科目…</td><td>外国語科目</td><td>英語I（Ｌ）</td><td>1.0</td><td>…</td><td>合</td></tr>
+                <tr class="ws-mid-row"><td colspan="7">︙（中略）</td></tr>
+                <tr><td>41</td><td>専攻科目</td><td>展開科目（英語…）</td><td>Ｐｕｂｌｉｃ　Ｓ…</td><td>1.0</td><td>…</td><td>合</td></tr>
+              </table>
+            </div>
+            <div class="ws-copy-example-label-end">▲ コピー終了（最後の行末）</div>
+          </div>
         </div>
       </div>
       <div class="ws-step">
