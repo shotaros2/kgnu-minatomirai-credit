@@ -487,10 +487,12 @@ function renderDetail(deptId, isShared) {
   currentDeptId = deptId;
 
   if (window._wsImport && !isShared) {
-    const matched = applyWebStationImport(deptId, window._wsImport);
+    const _c = window._wsImport;
+    const matched = applyWebStationImport(deptId, _c);
     window._wsImport = null;
     history.replaceState(null, '', location.pathname);
-    setTimeout(() => showToast(matched > 0 ? matched + '科目の単位を取り込みました' : '一致する科目が見つかりませんでした'), 600);
+    const _dbg = matched === 0 ? '（' + _c.length + '件検出, 先頭bigCat=' + (_c[0] ? _c[0][3] : '?') + '）' : '';
+    setTimeout(() => showToast(matched > 0 ? matched + '科目の単位を取り込みました' : '一致する科目が見つかりませんでした' + _dbg), 600);
   }
 
   const prog    = calcAll(dept);
@@ -893,7 +895,8 @@ function importFromPaste() {
   if (currentDeptId) {
     const matched = applyWebStationImport(currentDeptId, courses);
     renderDetail(currentDeptId);
-    setTimeout(() => showToast(matched > 0 ? matched + '科目の単位を取り込みました' : '一致する科目が見つかりませんでした'), 600);
+    const _dbg2 = matched === 0 ? '（' + courses.length + '件検出, 先頭bigCat=' + (courses[0] ? courses[0][3] : '?') + '）' : '';
+    setTimeout(() => showToast(matched > 0 ? matched + '科目の単位を取り込みました' : '一致する科目が見つかりませんでした' + _dbg2), 600);
   } else {
     window._wsImport = courses;
     renderSelect();
