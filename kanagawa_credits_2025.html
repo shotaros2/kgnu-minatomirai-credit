@@ -761,9 +761,9 @@ function parseWebStationText(text) {
         passCol = pi;
         nameCol = Math.max(0, cells.indexOf('開講科目'));
         creditsCol = cells.findIndex(c => c === '単位数' || c === '単位');
-        catCol = cells.findIndex(c => c.includes('大区分'));
+        catCol = cells.findIndex(c => c.includes('中区分'));
         if (creditsCol === -1) creditsCol = 9;
-        if (catCol === -1) catCol = 5;
+        if (catCol === -1) catCol = 6;
         headerFound = true;
         continue;
       }
