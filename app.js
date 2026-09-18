@@ -897,8 +897,8 @@ function showWsGuide() {
       <div class="ws-step">
         <div class="ws-step-num">2</div>
         <div class="ws-step-body">
-          <div class="ws-step-title">ページ内を右クリック →「すべて選択」→「コピー」</div>
-          <div class="ws-step-desc">PC: <b>Ctrl+A</b>（全選択）→ <b>Ctrl+C</b>（コピー）<br>Mac: <b>Cmd+A</b> → <b>Cmd+C</b><br>スマホ: 画面テキストを長押し →「すべて選択」→「コピー」<br><span class="ws-hint-ok">✅ どこからどこまで選ぶか気にしなくてOK！<br>ページ全体をコピーしても自動で成績だけ取り込みます</span></div>
+          <div class="ws-step-title">成績表の「1」から最後の番号の行までを選択してコピー</div>
+          <div class="ws-step-desc">表の先頭行「1　ＦＹＳ…」から最後の番号の行末までをドラッグして選択 → <b>Ctrl+C</b>（Mac: <b>Cmd+C</b>）<br>スマホ: 「1」の行を長押し →「すべて選択」→「コピー」<br><span class="ws-hint-ok">✅ 見出し行やナビが混ざっても自動でフィルタリングします</span></div>
         </div>
       </div>
       <div class="ws-step">
