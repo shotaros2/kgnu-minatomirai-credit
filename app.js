@@ -890,25 +890,26 @@ function showWsGuide() {
       <div class="ws-step">
         <div class="ws-step-num">1</div>
         <div class="ws-step-body">
-          <div class="ws-step-title">WebStationで成績ページを開く</div>
-          <div class="ws-step-desc">WebStationにログインして「成績・修得単位照会」を開く</div>
+          <div class="ws-step-title">WebStationで「成績・修得単位照会」を開く</div>
+          <div class="ws-step-desc">WebStationにログインして「成績・修得単位照会」のページを開く</div>
         </div>
       </div>
       <div class="ws-step">
         <div class="ws-step-num">2</div>
         <div class="ws-step-body">
-          <div class="ws-step-title">ページを全選択してコピー</div>
-          <div class="ws-step-desc">PC: Ctrl+A → Ctrl+C<br>スマホ: 画面を長押し →「すべて選択」→「コピー」</div>
+          <div class="ws-step-title">ページ内を右クリック →「すべて選択」→「コピー」</div>
+          <div class="ws-step-desc">PC: <b>Ctrl+A</b>（全選択）→ <b>Ctrl+C</b>（コピー）<br>Mac: <b>Cmd+A</b> → <b>Cmd+C</b><br>スマホ: 画面テキストを長押し →「すべて選択」→「コピー」<br><span class="ws-hint-ok">✅ どこからどこまで選ぶか気にしなくてOK！<br>ページ全体をコピーしても自動で成績だけ取り込みます</span></div>
         </div>
       </div>
       <div class="ws-step">
         <div class="ws-step-num">3</div>
         <div class="ws-step-body">
-          <div class="ws-step-title">下に貼り付けて「取込む」をタップ</div>
+          <div class="ws-step-title">下の枠に貼り付けて「取込む」をタップ</div>
+          <div class="ws-step-desc">PC: <b>Ctrl+V</b>　スマホ: 枠を長押し →「貼り付け」</div>
         </div>
       </div>
     </div>
-    <textarea id="ws-paste-area" class="ws-paste-area" placeholder="ここに貼り付け（Ctrl+V またはスマホは長押し→貼り付け）"></textarea>
+    <textarea id="ws-paste-area" class="ws-paste-area" placeholder="コピーしたテキストをここに貼り付け"></textarea>
     <button class="ws-import-btn" onclick="importFromPaste()">取込む</button>
     <details class="ws-bm-details">
       <summary class="ws-bm-summary">▶ 毎回コピーするのが面倒な方：ブックマークレット設定（上級）</summary>
