@@ -737,14 +737,28 @@ const WS_BOOKMARKLET = `javascript:(function(){function norm(s){return s.replace
 
 function parseWebStationText(text) {
   const courses = [];
+  let nameCol = 1, passCol = 4, creditsCol = 9, catCol = 5;
+  let headerFound = false;
   for (const line of text.split('\n')) {
-    const cells = line.split('\t');
-    if (cells.length < 11) continue;
-    const name = cells[1].trim();
-    const pass = cells[4].trim();
-    const credits = parseFloat(cells[10].trim());
+    const cells = line.split('\t').map(c => c.trim());
+    if (!headerFound) {
+      const pi = cells.indexOf('合否');
+      if (pi !== -1) {
+        passCol = pi;
+        nameCol = Math.max(0, cells.indexOf('開講科目'));
+        creditsCol = cells.findIndex(c => c === '単位数' || c === '単位');
+        catCol = cells.findIndex(c => c.includes('大区分'));
+        if (creditsCol === -1) creditsCol = 9;
+        if (catCol === -1) catCol = 5;
+        headerFound = true;
+        continue;
+      }
+    }
+    const name = cells[nameCol] || '';
+    const pass = cells[passCol] || '';
+    const credits = parseFloat(cells[creditsCol] || '');
     if (pass === '合' && !isNaN(credits) && name && name !== '開講科目') {
-      courses.push([normCourse(name), credits, cells[5].trim()]);
+      courses.push([normCourse(name), credits, cells[catCol] || '']);
     }
   }
   return courses;
