@@ -60,6 +60,13 @@ footer {
 /* ── Main ── */
 main { flex: 1; max-width: 860px; margin: 0 auto; padding: 24px 16px; width: 100%; }
 
+/* ── WebStation Import Banner ── */
+.ws-import-banner {
+  background: #dbeafe; color: #1e40af; border: 1.5px solid #93c5fd;
+  border-radius: var(--radius); padding: 12px 16px; font-size: 13px; font-weight: 600;
+  margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+
 /* ── Select View ── */
 .select-intro { font-size: 14px; color: var(--text-sub); margin-bottom: 20px; }
 .faculties { display: flex; flex-direction: column; gap: 24px; }

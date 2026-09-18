@@ -431,7 +431,11 @@ function renderSelect() {
   const faculties = {};
   DEPTS.forEach(d => { (faculties[d.faculty] = faculties[d.faculty] || []).push(d); });
 
-  let html = '<div class="select-view"><p class="select-intro">所属している学科・コースを選んでください</p><div class="faculties">';
+  let html = '<div class="select-view">';
+  if (window._wsImport) {
+    html += '<div class="ws-import-banner">📥 WebStationのデータを検出しました。学科を選択すると単位を自動で取り込みます。</div>';
+  }
+  html += '<p class="select-intro">所属している学科・コースを選んでください</p><div class="faculties">';
 
   for (const [fac, depts] of Object.entries(faculties)) {
     const fcolor = depts[0].fcolor;
@@ -463,6 +467,13 @@ function renderDetail(deptId, isShared) {
   const dept = DEPTS.find(d => d.id === deptId);
   if (!dept) { renderSelect(); return; }
   currentDeptId = deptId;
+
+  if (window._wsImport && !isShared) {
+    const matched = applyWebStationImport(deptId, window._wsImport);
+    window._wsImport = null;
+    history.replaceState(null, '', location.pathname);
+    setTimeout(() => showToast(matched > 0 ? matched + '科目の単位を取り込みました' : '一致する科目が見つかりませんでした'), 600);
+  }
 
   const prog    = calcAll(dept);
   const pct     = Math.min(100, Math.round(prog.total / prog.required * 100));
@@ -677,7 +688,51 @@ function loadShareFromHash() {
   }
 }
 
+function normCourse(s) {
+  return s.replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+          .replace(/[　\s（()）[\]【】・]/g, '').toLowerCase();
+}
+
+function applyWebStationImport(deptId, courses) {
+  const dept = DEPTS.find(d => d.id === deptId);
+  if (!dept) return 0;
+  let matched = 0;
+  const used = new Set();
+  ['kyoyo', 'senkou'].forEach(sec => {
+    const section = dept[sec];
+    if (!section) return;
+    section.items.forEach(item => {
+      const normItem = normCourse(item.id);
+      for (let i = 0; i < courses.length; i++) {
+        if (used.has(i)) continue;
+        const normWs = normCourse(courses[i][0]);
+        if (normWs === normItem || normWs.includes(normItem) || normItem.includes(normWs)) {
+          if (!localStorage.getItem(storageKey(deptId, sec, item.id))) {
+            localStorage.setItem(storageKey(deptId, sec, item.id), courses[i][1]);
+            matched++;
+          }
+          used.add(i);
+          break;
+        }
+      }
+    });
+  });
+  return matched;
+}
+
+function loadWsImportFromHash() {
+  const hash = location.hash.slice(1);
+  if (!hash.includes('ws_import=')) return false;
+  try {
+    const enc = new URLSearchParams(hash).get('ws_import');
+    if (!enc) return false;
+    window._wsImport = JSON.parse(decodeURIComponent(escape(atob(enc))));
+    return true;
+  } catch(e) { return false; }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  loadWsImportFromHash();
   if (!loadShareFromHash()) renderSelect();
 });
   </script>
