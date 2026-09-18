@@ -743,7 +743,7 @@ function applyWebStationImport(deptId, courses) {
         }
         if (byName || byCat) { totalCredits += credits; matchIndices.push(i); }
       }
-      if (matchIndices.length > 0 && !localStorage.getItem(storageKey(deptId, sec, item.id))) {
+      if (matchIndices.length > 0) {
         localStorage.setItem(storageKey(deptId, sec, item.id), totalCredits);
         matched++;
         matchIndices.forEach(i => used.add(i));
