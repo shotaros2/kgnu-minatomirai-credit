@@ -449,6 +449,8 @@ function renderSelect() {
   let html = '<div class="select-view">';
   if (window._wsImport) {
     html += '<div class="ws-import-banner">📥 WebStationのデータを検出しました。学科を選択すると単位を自動で取り込みます。</div>';
+  } else {
+    html += '<button class="ws-guide-btn" onclick="showWsGuide()">📥 WebStationから単位を自動取込</button>';
   }
   html += '<p class="select-intro">所属している学科を選んでください</p><div class="faculties">';
 
@@ -809,6 +811,66 @@ function loadWsImportFromHash() {
     window._wsImport = JSON.parse(decodeURIComponent(escape(atob(enc))));
     return true;
   } catch(e) { return false; }
+}
+
+// ── WebStation Guide Modal ──
+const WS_BOOKMARKLET = `javascript:(function(){function norm(s){return s.replace(/[！-～]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0)}).replace(/\s/g,'').toLowerCase();}var tables=document.querySelectorAll('table');var belong='';if(tables[0]){tables[0].querySelectorAll('tr').forEach(function(r){var cells=r.querySelectorAll('td');for(var i=0;i<cells.length-1;i++){if(cells[i].textContent.trim()==='所属'){belong=cells[i+1].textContent.trim();}}});}var FACS={'理学部':'https://kgnu-yokohama-rikei.vercel.app/','工学部':'https://kgnu-yokohama-rikei.vercel.app/','化学生命学部':'https://kgnu-yokohama-rikei.vercel.app/','情報学部':'https://kgnu-yokohama-rikei.vercel.app/','経営学部':'https://kgnu-minatomirai-credit.vercel.app/','外国語学部':'https://kgnu-minatomirai-credit.vercel.app/','国際日本学部':'https://kgnu-minatomirai-credit.vercel.app/','法学部':'https://kgnu-yokohama-credit-2.vercel.app/','経済学部':'https://kgnu-yokohama-credit-2.vercel.app/','人間科学部':'https://kgnu-yokohama-credit-2.vercel.app/','建築学部':'https://kgnu-yokohama-credit-2.vercel.app/'};var appUrl=null;for(var f in FACS){if(belong.indexOf(f)>=0){appUrl=FACS[f];break;}}if(!appUrl){alert('「'+belong+'」は対応していません。');return;}var courses=[];if(tables[1]){tables[1].querySelectorAll('tr').forEach(function(r){var cells=r.querySelectorAll('td');if(cells.length<11)return;var name=cells[1].textContent.trim();var pass=cells[4].textContent.trim();var credits=parseFloat(cells[10].textContent.trim());if(pass==='合'&&!isNaN(credits)&&name&&name!=='開講科目')courses.push([norm(name),credits,cells[5].textContent.trim()]);});}if(courses.length===0){alert('修得済み科目が見つかりません。\\n成績・修得単位照会ページで実行してください。');return;}var enc=btoa(unescape(encodeURIComponent(JSON.stringify(courses))));window.open(appUrl+'#ws_import='+enc,'_blank');})();`;
+
+function showWsGuide() {
+  const existing = document.getElementById('ws-modal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'ws-modal';
+  overlay.className = 'ws-modal-overlay';
+  overlay.innerHTML = `<div class="ws-modal">
+    <div class="ws-modal-header">
+      <span class="ws-modal-title">📥 WebStationから単位を自動取込</span>
+      <button class="ws-modal-close" onclick="closeWsGuide()">×</button>
+    </div>
+    <div class="ws-steps">
+      <div class="ws-step">
+        <div class="ws-step-num">1</div>
+        <div class="ws-step-body">
+          <div class="ws-step-title">WebStationで成績ページを開く</div>
+          <div class="ws-step-desc">WebStationにログインして「成績・修得単位照会」を開いてください</div>
+        </div>
+      </div>
+      <div class="ws-step">
+        <div class="ws-step-num">2</div>
+        <div class="ws-step-body">
+          <div class="ws-step-title">ブックマークレットをブラウザに追加</div>
+          <div class="ws-step-desc">下のボタンでコードをコピーして、ブラウザのブックマークのURLとして保存（名前は「単位取込」など）<br><br>PCはリンクをブックマークバーへドラッグでも追加できます</div>
+          <a id="ws-drag-link" class="ws-drag-link">🔖 単位取込（PCはここをドラッグ）</a>
+        </div>
+      </div>
+      <div class="ws-step">
+        <div class="ws-step-num">3</div>
+        <div class="ws-step-body">
+          <div class="ws-step-title">WebStationのページでクリック</div>
+          <div class="ws-step-desc">「成績・修得単位照会」を開いた状態でブックマークをクリックするとアプリが自動で開き、修得単位が入力されます</div>
+        </div>
+      </div>
+    </div>
+    <button class="ws-copy-btn" onclick="copyBookmarklet()">📋 コードをコピー（スマホはこちら）</button>
+    <p class="ws-drag-hint">スマホ: ブラウザ設定→ブックマーク追加→URLに貼り付け<br>PC（Chrome）: ブックマークバーを表示してリンクをドラッグ</p>
+  </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeWsGuide(); });
+  document.body.appendChild(overlay);
+  document.getElementById('ws-drag-link').href = WS_BOOKMARKLET;
+}
+
+function closeWsGuide() {
+  const el = document.getElementById('ws-modal');
+  if (el) el.remove();
+}
+
+function copyBookmarklet() {
+  navigator.clipboard.writeText(WS_BOOKMARKLET).then(() => {
+    showToast('コードをコピーしました！');
+    closeWsGuide();
+  }).catch(() => {
+    prompt('このコードをコピーしてください:', WS_BOOKMARKLET);
+  });
 }
 
 // ── Boot ──
