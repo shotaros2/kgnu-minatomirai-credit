@@ -816,6 +816,37 @@ function loadWsImportFromHash() {
 // ── WebStation Guide Modal ──
 const WS_BOOKMARKLET = `javascript:(function(){function norm(s){return s.replace(/[！-～]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0)}).replace(/\s/g,'').toLowerCase();}var tables=document.querySelectorAll('table');var belong='';if(tables[0]){tables[0].querySelectorAll('tr').forEach(function(r){var cells=r.querySelectorAll('td');for(var i=0;i<cells.length-1;i++){if(cells[i].textContent.trim()==='所属'){belong=cells[i+1].textContent.trim();}}});}var FACS={'理学部':'https://kgnu-yokohama-rikei.vercel.app/','工学部':'https://kgnu-yokohama-rikei.vercel.app/','化学生命学部':'https://kgnu-yokohama-rikei.vercel.app/','情報学部':'https://kgnu-yokohama-rikei.vercel.app/','経営学部':'https://kgnu-minatomirai-credit.vercel.app/','外国語学部':'https://kgnu-minatomirai-credit.vercel.app/','国際日本学部':'https://kgnu-minatomirai-credit.vercel.app/','法学部':'https://kgnu-yokohama-credit-2.vercel.app/','経済学部':'https://kgnu-yokohama-credit-2.vercel.app/','人間科学部':'https://kgnu-yokohama-credit-2.vercel.app/','建築学部':'https://kgnu-yokohama-credit-2.vercel.app/'};var appUrl=null;for(var f in FACS){if(belong.indexOf(f)>=0){appUrl=FACS[f];break;}}if(!appUrl){alert('「'+belong+'」は対応していません。');return;}var courses=[];if(tables[1]){tables[1].querySelectorAll('tr').forEach(function(r){var cells=r.querySelectorAll('td');if(cells.length<11)return;var name=cells[1].textContent.trim();var pass=cells[4].textContent.trim();var credits=parseFloat(cells[10].textContent.trim());if(pass==='合'&&!isNaN(credits)&&name&&name!=='開講科目')courses.push([norm(name),credits,cells[5].textContent.trim()]);});}if(courses.length===0){alert('修得済み科目が見つかりません。\\n成績・修得単位照会ページで実行してください。');return;}var enc=btoa(unescape(encodeURIComponent(JSON.stringify(courses))));window.open(appUrl+'#ws_import='+enc,'_blank');})();`;
 
+function parseWebStationText(text) {
+  const courses = [];
+  for (const line of text.split('\n')) {
+    const cells = line.split('\t');
+    if (cells.length < 11) continue;
+    const name = cells[1].trim();
+    const pass = cells[4].trim();
+    const credits = parseFloat(cells[10].trim());
+    if (pass === '合' && !isNaN(credits) && name && name !== '開講科目') {
+      courses.push([normCourse(name), credits, cells[5].trim()]);
+    }
+  }
+  return courses;
+}
+
+function importFromPaste() {
+  const text = (document.getElementById('ws-paste-area') || {}).value || '';
+  if (!text.trim()) {
+    alert('テキストが入力されていません。\nWebStationのページをコピーして貼り付けてください。');
+    return;
+  }
+  const courses = parseWebStationText(text);
+  if (courses.length === 0) {
+    alert('修得済み科目が見つかりませんでした。\n「成績・修得単位照会」のページをそのままコピーしてください。');
+    return;
+  }
+  window._wsImport = courses;
+  closeWsGuide();
+  renderSelect();
+}
+
 function showWsGuide() {
   const existing = document.getElementById('ws-modal');
   if (existing) existing.remove();
@@ -824,7 +855,7 @@ function showWsGuide() {
   overlay.className = 'ws-modal-overlay';
   overlay.innerHTML = `<div class="ws-modal">
     <div class="ws-modal-header">
-      <span class="ws-modal-title">📥 WebStationから単位を自動取込</span>
+      <span class="ws-modal-title">📥 WebStationから単位を取込</span>
       <button class="ws-modal-close" onclick="closeWsGuide()">×</button>
     </div>
     <div class="ws-steps">
@@ -832,27 +863,34 @@ function showWsGuide() {
         <div class="ws-step-num">1</div>
         <div class="ws-step-body">
           <div class="ws-step-title">WebStationで成績ページを開く</div>
-          <div class="ws-step-desc">WebStationにログインして「成績・修得単位照会」を開いてください</div>
+          <div class="ws-step-desc">WebStationにログインして「成績・修得単位照会」を開く</div>
         </div>
       </div>
       <div class="ws-step">
         <div class="ws-step-num">2</div>
         <div class="ws-step-body">
-          <div class="ws-step-title">ブックマークレットをブラウザに追加</div>
-          <div class="ws-step-desc">下のボタンでコードをコピーして、ブラウザのブックマークのURLとして保存（名前は「単位取込」など）<br><br>PCはリンクをブックマークバーへドラッグでも追加できます</div>
-          <a id="ws-drag-link" class="ws-drag-link">🔖 単位取込（PCはここをドラッグ）</a>
+          <div class="ws-step-title">ページを全選択してコピー</div>
+          <div class="ws-step-desc">PC: Ctrl+A → Ctrl+C<br>スマホ: 画面を長押し →「すべて選択」→「コピー」</div>
         </div>
       </div>
       <div class="ws-step">
         <div class="ws-step-num">3</div>
         <div class="ws-step-body">
-          <div class="ws-step-title">WebStationのページでクリック</div>
-          <div class="ws-step-desc">「成績・修得単位照会」を開いた状態でブックマークをクリックするとアプリが自動で開き、修得単位が入力されます</div>
+          <div class="ws-step-title">下に貼り付けて「取込む」をタップ</div>
         </div>
       </div>
     </div>
-    <button class="ws-copy-btn" onclick="copyBookmarklet()">📋 コードをコピー（スマホはこちら）</button>
-    <p class="ws-drag-hint">スマホ: ブラウザ設定→ブックマーク追加→URLに貼り付け<br>PC（Chrome）: ブックマークバーを表示してリンクをドラッグ</p>
+    <textarea id="ws-paste-area" class="ws-paste-area" placeholder="ここに貼り付け（Ctrl+V またはスマホは長押し→貼り付け）"></textarea>
+    <button class="ws-import-btn" onclick="importFromPaste()">取込む</button>
+    <details class="ws-bm-details">
+      <summary class="ws-bm-summary">▶ 毎回コピーするのが面倒な方：ブックマークレット設定（上級）</summary>
+      <div class="ws-bm-body">
+        <p class="ws-step-desc">一度設定するとWebStationで1クリックするだけで自動取込できます</p>
+        <a id="ws-drag-link" class="ws-drag-link">🔖 単位取込（PCはここをドラッグ）</a>
+        <button class="ws-copy-btn" onclick="copyBookmarklet()">📋 コードをコピー（スマホ向け）</button>
+        <p class="ws-drag-hint">スマホ: ブックマーク追加後にURLをコピーしたコードで上書き<br>PC（Chrome）: ブックマークバーを表示してリンクをドラッグ</p>
+      </div>
+    </details>
   </div>`;
   overlay.addEventListener('click', e => { if (e.target === overlay) closeWsGuide(); });
   document.body.appendChild(overlay);
@@ -867,7 +905,6 @@ function closeWsGuide() {
 function copyBookmarklet() {
   navigator.clipboard.writeText(WS_BOOKMARKLET).then(() => {
     showToast('コードをコピーしました！');
-    closeWsGuide();
   }).catch(() => {
     prompt('このコードをコピーしてください:', WS_BOOKMARKLET);
   });
