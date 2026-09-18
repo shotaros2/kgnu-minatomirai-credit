@@ -265,11 +265,11 @@ const DEPTS = [
         { id: 'gak_kyo', label: '学部教養科目',           min: 10, group: '基幹科目（計26以上）' },
         { id: 'gak_nyu', label: '学科入門科目',           min: 8,  group: '基幹科目（計26以上）' },
         { id: 'enshu',   label: '演習・ゼミナール',        min: 8,  group: '基幹科目（計26以上）' },
-        { id: 'eng14',   label: '展開科目（英語）',        min: 14, group: '展開科目（計50以上）' },
-        { id: 'chiki_l', label: '展開科目（地域言語）',    min: 8,  courseMin: { nihon: 4 },  group: '展開科目（計50以上）' },
-        { id: 'course',  label: '展開科目（コース科目）',  min: 14, courseMin: { nihon: 18 }, group: '展開科目（計50以上）' },
-        { id: 'hoka_c',  label: '展開科目（他コース）',    min: 14, group: '展開科目（計50以上）' },
-        { id: 'kanren',  label: '関連科目',               min: 20, group: '関連科目' },
+        { id: 'eng14',   label: '展開科目（英語）',        min: 14, wsCats: ['展開科目（英語・選択）', '展開科目（英語・必修）'], group: '展開科目（計50以上）' },
+        { id: 'chiki_l', label: '展開科目（地域言語）',    min: 8,  courseMin: { nihon: 4 },  wsCats: ['展開科目（英語以外の外国語）'], group: '展開科目（計50以上）' },
+        { id: 'course',  label: '展開科目（コース科目）',  min: 14, courseMin: { nihon: 18 }, wsCourseKeyword: { bunka: '文化交流コース科目', kanko: '観光文化コース', gengo: '言語・メディアコース科目', nihon: '国際日本学コース' }, group: '展開科目（計50以上）' },
+        { id: 'hoka_c',  label: '展開科目（他コース）',    min: 14, wsMatchAll: true, group: '展開科目（計50以上）' },
+        { id: 'kanren',  label: '関連科目',               min: 20, wsCats: ['関連科目'], group: '関連科目' },
       ]
     },
     shinkyu: {
@@ -787,9 +787,13 @@ function applyWebStationImport(deptId, courses) {
   ['kyoyo', 'senkou'].forEach(sec => {
     const section = dept[sec];
     if (!section) return;
-    const sortedItems = [...section.items].sort((a, b) =>
-      normCourse(getItemKeyword(b.label || '')).length - normCourse(getItemKeyword(a.label || '')).length
-    );
+    const minKwLen = sec === 'kyoyo' ? 2 : 4;
+    const selectedCourse = dept.courseSelect ? (localStorage.getItem(dept.courseSelect.storageKey) || '') : '';
+    const sortedItems = [...section.items].sort((a, b) => {
+      if (a.wsMatchAll && !b.wsMatchAll) return 1;
+      if (!a.wsMatchAll && b.wsMatchAll) return -1;
+      return normCourse(getItemKeyword(b.label || '')).length - normCourse(getItemKeyword(a.label || '')).length;
+    });
     sortedItems.forEach(item => {
       const normId = normCourse(item.id);
       const kw = normCourse(getItemKeyword(item.label || ''));
@@ -802,13 +806,19 @@ function applyWebStationImport(deptId, courses) {
         if (sec === 'kyoyo' && !bigCat.includes('共通教養')) continue;
         if (sec === 'senkou' && bigCat.includes('共通教養')) continue;
         const normCat = normCourse(wsCat || '');
-        const nameMatchId = wsName === normId || wsName.includes(normId) || normId.includes(wsName);
-        const minKwLen = sec === 'kyoyo' ? 2 : 4;
-        const catMatchKw = kw.length >= minKwLen && normCat.length > 0 && normCat.includes(kw);
-        if (nameMatchId || catMatchKw) {
-          totalCredits += credits;
-          matchIndices.push(i);
+        const byName = wsName === normId || wsName.includes(normId) || normId.includes(wsName);
+        let byCat = false;
+        if (item.wsCats) {
+          byCat = item.wsCats.some(c => normCat.includes(normCourse(c)));
+        } else if (item.wsCourseKeyword) {
+          const ckw = selectedCourse ? (item.wsCourseKeyword[selectedCourse] || '') : '';
+          byCat = ckw.length > 0 && normCat.includes(normCourse(ckw));
+        } else if (item.wsMatchAll) {
+          byCat = normCat.includes('展開科目');
+        } else {
+          byCat = kw.length >= minKwLen && normCat.length > 0 && normCat.includes(kw);
         }
+        if (byName || byCat) { totalCredits += credits; matchIndices.push(i); }
       }
       if (matchIndices.length > 0 && !localStorage.getItem(storageKey(deptId, sec, item.id))) {
         localStorage.setItem(storageKey(deptId, sec, item.id), totalCredits);
