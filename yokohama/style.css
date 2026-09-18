@@ -380,8 +380,15 @@ main { flex: 1; max-width: 860px; margin: 0 auto; padding: 24px 16px; width: 100
 }
 
 /* WebStation preview & reference drawer */
-.ws-link-btn { display: inline-block; margin-top: 8px; padding: 5px 12px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 600; }
-.ws-link-btn:hover { background: #dbeafe; }
+.ws-link-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 10px; padding: 10px 20px;
+  background: #2563eb; color: #fff; text-decoration: none;
+  border-radius: 8px; font-size: 13px; font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37,99,235,.3);
+  transition: background .15s, box-shadow .15s;
+}
+.ws-link-btn:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,.4); }
 .ws-preview { margin-top: 8px; }
 .ws-preview-warn { font-size: 12px; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; }
 .ws-preview-stat { font-size: 12px; margin-bottom: 6px; }
