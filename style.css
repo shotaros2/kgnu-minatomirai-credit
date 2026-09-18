@@ -378,3 +378,32 @@ main { flex: 1; max-width: 860px; margin: 0 auto; padding: 24px 16px; width: 100
   .total-earned { font-size: 24px; }
   .item-label { font-size: 12px; }
 }
+
+/* WebStation preview & reference drawer */
+.ws-link-btn { display: inline-block; margin-top: 8px; padding: 5px 12px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 600; }
+.ws-link-btn:hover { background: #dbeafe; }
+.ws-preview { margin-top: 8px; }
+.ws-preview-warn { font-size: 12px; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; }
+.ws-preview-stat { font-size: 12px; margin-bottom: 6px; }
+.ws-stat-ok { color: #16a34a; font-weight: 700; }
+.ws-preview-wrap { overflow-x: auto; max-height: 200px; overflow-y: auto; border-radius: 6px; border: 1px solid var(--border); }
+.ws-preview-table { border-collapse: collapse; font-size: 11px; white-space: nowrap; width: 100%; }
+.ws-preview-table th { background: var(--bg-card); padding: 3px 6px; border: 1px solid var(--border); font-weight: 600; text-align: left; }
+.ws-preview-table td { padding: 3px 6px; border: 1px solid var(--border); }
+.ws-row-pass td { background: #f0fdf4; }
+.ws-row-fail td { background: #f8fafc; color: #94a3b8; }
+.ws-ref-toggle { position: fixed; bottom: 16px; right: 16px; z-index: 300; background: #1e40af; color: #fff; border: none; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+.ws-ref-toggle:hover { background: #1d3faa; }
+.ws-ref-panel { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: var(--bg-card); border-top: 2px solid var(--border); max-height: 50vh; display: flex; flex-direction: column; }
+.ws-ref-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.ws-ref-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-sub); padding: 0 4px; }
+.ws-ref-body { overflow-y: auto; flex: 1; padding: 10px 16px; }
+.ws-ref-group { margin-bottom: 14px; }
+.ws-ref-group-label { font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 4px; }
+.ws-ref-table { border-collapse: collapse; font-size: 11px; white-space: nowrap; width: 100%; }
+.ws-ref-table th { background: var(--bg-card); padding: 3px 8px; border: 1px solid var(--border); font-weight: 600; text-align: left; }
+.ws-ref-table td { padding: 3px 8px; border: 1px solid var(--border); }
+.ws-ref-cat { color: var(--text-sub); }
+.ws-ref-name { max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.ws-ref-cr { text-align: right; font-variant-numeric: tabular-nums; }
+.ws-ref-pass { font-weight: 700; }

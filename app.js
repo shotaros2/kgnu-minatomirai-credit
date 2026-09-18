@@ -366,6 +366,7 @@ const DEPTS = [
 
 // ── State ──
 let currentDeptId = null;
+let wsReferenceRows = null;
 
 // ── Storage ──
 function storageKey(deptId, sec, itemId) {
@@ -478,6 +479,7 @@ function renderSelect() {
 
   html += '</div></div>';
   document.getElementById('app').innerHTML = html;
+  syncRefBtn();
 }
 
 // ── Rendering: Detail View ──
@@ -537,6 +539,7 @@ function renderDetail(deptId, isShared) {
   html += '</div>';
 
   document.getElementById('app').innerHTML = html;
+  syncRefBtn();
 }
 
 function renderCourseSelectHTML(dept) {
@@ -845,6 +848,109 @@ function loadWsImportFromHash() {
   } catch(e) { return false; }
 }
 
+// ── WebStation Helpers ──
+function normalizeWsText(text) {
+  return text
+    .replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/　/g, ' ')
+    .replace(/\r\n|\r/g, '\n');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderWsPreview(text) {
+  const lines = text.split(/\r?\n|\r/);
+  let headerIdx = -1, nameCol = 1, passCol = 4, creditsCol = 9, catCol = 6, bigCatCol = 5;
+  for (let i = 0; i < lines.length; i++) {
+    const cells = lines[i].split('\t').map(c => c.trim());
+    const pi = cells.indexOf('合否');
+    if (pi !== -1) {
+      headerIdx = i; passCol = pi;
+      nameCol = Math.max(0, cells.indexOf('開講科目'));
+      creditsCol = cells.findIndex(c => c === '単位数' || c === '単位');
+      catCol = cells.findIndex(c => c.includes('中区分'));
+      bigCatCol = cells.findIndex(c => c.includes('大区分'));
+      if (creditsCol === -1) creditsCol = 9;
+      if (catCol === -1) catCol = 6;
+      if (bigCatCol === -1) bigCatCol = 5;
+      break;
+    }
+  }
+  const prev = document.getElementById('ws-preview');
+  if (!prev) return;
+  if (headerIdx === -1) {
+    wsReferenceRows = null; syncRefBtn();
+    prev.innerHTML = '<div class="ws-preview-warn">⚠ 見出し行（「合否」を含む行）が見つかりません。見出し行から選択してコピーしてください。</div>';
+    return;
+  }
+  const allRows = [];
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    const cells = lines[i].split('\t').map(c => c.trim());
+    const name = cells[nameCol] || '';
+    if (!name || name === '開講科目') continue;
+    const pass = (cells[passCol] || '').trim();
+    const credits = parseFloat(cells[creditsCol] || '');
+    if (!name || isNaN(credits)) continue;
+    allRows.push({ name, pass, credits, cat: cells[catCol] || '', bigCat: cells[bigCatCol] || '' });
+  }
+  wsReferenceRows = allRows.length > 0 ? allRows : null;
+  syncRefBtn();
+  if (allRows.length === 0) {
+    prev.innerHTML = '<div class="ws-preview-warn">科目が見つかりませんでした。</div>'; return;
+  }
+  const okRows = allRows.filter(r => r.pass === '合');
+  const totalCr = okRows.reduce((a, r) => a + r.credits, 0);
+  let html = `<div class="ws-preview-stat"><span class="ws-stat-ok">✓ 合格 ${okRows.length} 科目・${totalCr} 単位</span>（全 ${allRows.length} 件）</div>`;
+  html += '<div class="ws-preview-wrap"><table class="ws-preview-table"><thead><tr><th>大区分</th><th>中区分</th><th>科目名</th><th>単位</th><th>合否</th></tr></thead><tbody>';
+  for (const r of allRows) {
+    const passed = r.pass === '合';
+    html += `<tr class="${passed ? 'ws-row-pass' : 'ws-row-fail'}"><td>${escHtml(r.bigCat)}</td><td>${escHtml(r.cat)}</td><td>${escHtml(r.name)}</td><td>${r.credits}</td><td>${escHtml(r.pass)}</td></tr>`;
+  }
+  html += '</tbody></table></div>';
+  prev.innerHTML = html;
+}
+
+function syncRefBtn() {
+  const existing = document.getElementById('ws-ref-btn');
+  if (wsReferenceRows && currentDeptId !== null) {
+    if (!existing) {
+      const btn = document.createElement('button');
+      btn.id = 'ws-ref-btn';
+      btn.className = 'ws-ref-toggle';
+      btn.onclick = toggleWsRef;
+      btn.textContent = '📋 成績表 (' + wsReferenceRows.length + '科目)';
+      document.body.appendChild(btn);
+    } else {
+      existing.textContent = '📋 成績表 (' + wsReferenceRows.length + '科目)';
+    }
+  } else {
+    if (existing) existing.remove();
+  }
+}
+
+function toggleWsRef() {
+  const existing = document.getElementById('ws-ref-panel');
+  if (existing) { existing.remove(); return; }
+  if (!wsReferenceRows) return;
+  const groups = {};
+  wsReferenceRows.forEach(r => { const g = r.bigCat || 'その他'; (groups[g] = groups[g] || []).push(r); });
+  let body = '';
+  for (const [g, rows] of Object.entries(groups)) {
+    body += `<div class="ws-ref-group"><div class="ws-ref-group-label">${escHtml(g)}</div><table class="ws-ref-table"><thead><tr><th>中区分</th><th>科目名</th><th>単位</th><th>合否</th></tr></thead><tbody>`;
+    rows.forEach(r => {
+      body += `<tr><td class="ws-ref-cat">${escHtml(r.cat)}</td><td class="ws-ref-name">${escHtml(r.name)}</td><td class="ws-ref-cr">${r.credits}</td><td class="ws-ref-pass" style="color:${r.pass==='合'?'#16a34a':'#94a3b8'}">${escHtml(r.pass)}</td></tr>`;
+    });
+    body += '</tbody></table></div>';
+  }
+  const panel = document.createElement('div');
+  panel.id = 'ws-ref-panel';
+  panel.className = 'ws-ref-panel';
+  panel.innerHTML = `<div class="ws-ref-header"><span style="font-weight:700;font-size:14px">📋 WebStation 成績表（参照）</span><button class="ws-ref-close" onclick="toggleWsRef()">×</button></div><div class="ws-ref-body">${body}</div>`;
+  document.body.appendChild(panel);
+}
+
 // ── WebStation Guide Modal ──
 const WS_BOOKMARKLET = `javascript:(function(){function norm(s){return s.replace(/[！-～]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0)}).replace(/\s/g,'').toLowerCase();}var tables=document.querySelectorAll('table');var belong='';if(tables[0]){tables[0].querySelectorAll('tr').forEach(function(r){var cells=r.querySelectorAll('td');for(var i=0;i<cells.length-1;i++){if(cells[i].textContent.trim()==='所属'){belong=cells[i+1].textContent.trim();}}});}var FACS={'理学部':'https://kgnu-yokohama-rikei.vercel.app/','工学部':'https://kgnu-yokohama-rikei.vercel.app/','化学生命学部':'https://kgnu-yokohama-rikei.vercel.app/','情報学部':'https://kgnu-yokohama-rikei.vercel.app/','経営学部':'https://kgnu-minatomirai-credit.vercel.app/','外国語学部':'https://kgnu-minatomirai-credit.vercel.app/','国際日本学部':'https://kgnu-minatomirai-credit.vercel.app/','法学部':'https://kgnu-yokohama-credit-2.vercel.app/','経済学部':'https://kgnu-yokohama-credit-2.vercel.app/','人間科学部':'https://kgnu-yokohama-credit-2.vercel.app/','建築学部':'https://kgnu-yokohama-credit-2.vercel.app/'};var appUrl=null;for(var f in FACS){if(belong.indexOf(f)>=0){appUrl=FACS[f];break;}}if(!appUrl){alert('「'+belong+'」は対応していません。');return;}var courses=[];if(tables[1]){tables[1].querySelectorAll('tr').forEach(function(r){var cells=r.querySelectorAll('td');if(cells.length<11)return;var name=cells[1].textContent.trim();var pass=cells[4].textContent.trim();var credits=parseFloat(cells[10].textContent.trim());if(pass==='合'&&!isNaN(credits)&&name&&name!=='開講科目')courses.push([norm(name),credits,cells[5].textContent.trim()]);});}if(courses.length===0){alert('修得済み科目が見つかりません。\\n成績・修得単位照会ページで実行してください。');return;}var enc=btoa(unescape(encodeURIComponent(JSON.stringify(courses))));window.open(appUrl+'#ws_import='+enc,'_blank');})();`;
 
@@ -880,7 +986,7 @@ function parseWebStationText(text) {
 }
 
 function importFromPaste() {
-  const text = (document.getElementById('ws-paste-area') || {}).value || '';
+  const text = normalizeWsText((document.getElementById('ws-paste-area') || {}).value || '');
   if (!text.trim()) {
     alert('テキストが入力されていません。\nWebStationのページをコピーして貼り付けてください。');
     return;
@@ -918,6 +1024,7 @@ function showWsGuide() {
         <div class="ws-step-body">
           <div class="ws-step-title">WebStationで「単位修得状況照会」を開く</div>
           <div class="ws-step-desc">WebStationにログインして「教務/授業関連 → 成績 → 単位修得状況照会」のページを開く</div>
+          <a href="https://www.kanagawa-u.ac.jp/webstation/" target="_blank" rel="noopener" class="ws-link-btn">WebStation を開く →</a>
         </div>
       </div>
       <div class="ws-step">
@@ -948,7 +1055,8 @@ function showWsGuide() {
         </div>
       </div>
     </div>
-    <textarea id="ws-paste-area" class="ws-paste-area" placeholder="コピーしたテキストをここに貼り付け"></textarea>
+    <textarea id="ws-paste-area" class="ws-paste-area" placeholder="コピーしたテキストをここに貼り付け" rows="3"></textarea>
+    <div id="ws-preview" class="ws-preview"></div>
     <button class="ws-import-btn" onclick="importFromPaste()">取込む</button>
     <details class="ws-bm-details">
       <summary class="ws-bm-summary">▶ 毎回コピーするのが面倒な方：ブックマークレット設定（上級）</summary>
@@ -963,6 +1071,7 @@ function showWsGuide() {
   overlay.addEventListener('click', e => { if (e.target === overlay) closeWsGuide(); });
   document.body.appendChild(overlay);
   document.getElementById('ws-drag-link').href = WS_BOOKMARKLET;
+  document.getElementById('ws-paste-area').addEventListener('input', e => renderWsPreview(normalizeWsText(e.target.value)));
 }
 
 function closeWsGuide() {
