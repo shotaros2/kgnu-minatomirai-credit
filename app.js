@@ -775,6 +775,10 @@ function normCourse(s) {
           .replace(/[　\s（()）[\]【】・]/g, '').toLowerCase();
 }
 
+function getItemKeyword(label) {
+  return (label || '').replace(/（[^）]*）/g, '').replace(/の分野$/, '').replace(/科目$/, '').replace(/と市民$/, '').trim();
+}
+
 function applyWebStationImport(deptId, courses) {
   const dept = DEPTS.find(d => d.id === deptId);
   if (!dept) return 0;
@@ -783,19 +787,29 @@ function applyWebStationImport(deptId, courses) {
   ['kyoyo', 'senkou'].forEach(sec => {
     const section = dept[sec];
     if (!section) return;
-    section.items.forEach(item => {
-      const normItem = normCourse(item.id);
+    const sortedItems = [...section.items].sort((a, b) =>
+      normCourse(getItemKeyword(b.label || '')).length - normCourse(getItemKeyword(a.label || '')).length
+    );
+    sortedItems.forEach(item => {
+      const normId = normCourse(item.id);
+      const kw = normCourse(getItemKeyword(item.label || ''));
+      let totalCredits = 0;
+      const matchIndices = [];
       for (let i = 0; i < courses.length; i++) {
         if (used.has(i)) continue;
-        const normWs = normCourse(courses[i][0]);
-        if (normWs === normItem || normWs.includes(normItem) || normItem.includes(normWs)) {
-          if (!localStorage.getItem(storageKey(deptId, sec, item.id))) {
-            localStorage.setItem(storageKey(deptId, sec, item.id), courses[i][1]);
-            matched++;
-          }
-          used.add(i);
-          break;
+        const [wsName, credits, wsCat] = courses[i];
+        const normCat = normCourse(wsCat || '');
+        const nameMatchId = wsName === normId || wsName.includes(normId) || normId.includes(wsName);
+        const catMatchKw = sec === 'kyoyo' && kw.length >= 2 && normCat.length > 0 && normCat.includes(kw);
+        if (nameMatchId || catMatchKw) {
+          totalCredits += credits;
+          matchIndices.push(i);
         }
+      }
+      if (matchIndices.length > 0 && !localStorage.getItem(storageKey(deptId, sec, item.id))) {
+        localStorage.setItem(storageKey(deptId, sec, item.id), totalCredits);
+        matched++;
+        matchIndices.forEach(i => used.add(i));
       }
     });
   });
