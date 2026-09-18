@@ -797,10 +797,14 @@ function applyWebStationImport(deptId, courses) {
       const matchIndices = [];
       for (let i = 0; i < courses.length; i++) {
         if (used.has(i)) continue;
-        const [wsName, credits, wsCat] = courses[i];
+        const [wsName, credits, wsCat, wsBigCat] = courses[i];
+        const bigCat = wsBigCat || '';
+        if (sec === 'kyoyo' && !bigCat.includes('共通教養')) continue;
+        if (sec === 'senkou' && bigCat.includes('共通教養')) continue;
         const normCat = normCourse(wsCat || '');
         const nameMatchId = wsName === normId || wsName.includes(normId) || normId.includes(wsName);
-        const catMatchKw = sec === 'kyoyo' && kw.length >= 2 && normCat.length > 0 && normCat.includes(kw);
+        const minKwLen = sec === 'kyoyo' ? 2 : 4;
+        const catMatchKw = kw.length >= minKwLen && normCat.length > 0 && normCat.includes(kw);
         if (nameMatchId || catMatchKw) {
           totalCredits += credits;
           matchIndices.push(i);
@@ -832,7 +836,7 @@ const WS_BOOKMARKLET = `javascript:(function(){function norm(s){return s.replace
 
 function parseWebStationText(text) {
   const courses = [];
-  let nameCol = 1, passCol = 4, creditsCol = 9, catCol = 5;
+  let nameCol = 1, passCol = 4, creditsCol = 9, catCol = 6, bigCatCol = 5;
   let headerFound = false;
   for (const line of text.split('\n')) {
     const cells = line.split('\t').map(c => c.trim());
@@ -843,8 +847,10 @@ function parseWebStationText(text) {
         nameCol = Math.max(0, cells.indexOf('開講科目'));
         creditsCol = cells.findIndex(c => c === '単位数' || c === '単位');
         catCol = cells.findIndex(c => c.includes('中区分'));
+        bigCatCol = cells.findIndex(c => c.includes('大区分'));
         if (creditsCol === -1) creditsCol = 9;
         if (catCol === -1) catCol = 6;
+        if (bigCatCol === -1) bigCatCol = 5;
         headerFound = true;
         continue;
       }
@@ -853,7 +859,7 @@ function parseWebStationText(text) {
     const pass = cells[passCol] || '';
     const credits = parseFloat(cells[creditsCol] || '');
     if (pass === '合' && !isNaN(credits) && name && name !== '開講科目') {
-      courses.push([normCourse(name), credits, cells[catCol] || '']);
+      courses.push([normCourse(name), credits, cells[catCol] || '', cells[bigCatCol] || '']);
     }
   }
   return courses;
